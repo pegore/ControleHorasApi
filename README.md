@@ -1,2 +1,2 @@
 # ControleHorasApi
-API par ao controle de horas pessoais
+API para o controle de horas pessoais
