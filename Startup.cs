@@ -1,4 +1,5 @@
 using ControleHorasApi.Config;
+using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
@@ -40,6 +41,10 @@ namespace ControleHorasApi
                     Predicate = _ => true,
                     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
                 });
+            });
+            app.UseHealthChecksUI(opt =>
+            {
+                opt.UIPath = "/status-dashbord";
             });
         }
     }
