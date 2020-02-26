@@ -1,21 +1,43 @@
-using ControleHorasApi.Config;
-using HealthChecks.UI.Client;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
+using HealthChecks.UI.Client;
+using ControleHorasApi.Config;
 using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace ControleHorasApi
 {
     public class Startup
     {
+        public IConfiguration Configuration { get; }
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
         public void ConfigureServices(IServiceCollection services)
         {
+            var dadosDependencias = new List<Dependency>();
+            new ConfigureFromConfigurationOptions<List<Dependency>>(
+                Configuration.GetSection("Dependencies"))
+                    .Configure(dadosDependencias);
+            dadosDependencias = dadosDependencias.OrderBy(d => d.Name).ToList();
+
+            // Verificando a disponibilidade dos bancos de dados
+            // da aplicação através de Health Checks
             // Adicionar o método para vericar o healthcheck da dependencia a ser testada
-            // Exemplo: Mysql, SQLServer, MongoDB, Rabbit - Verificar qual o método correto
-            services.AddHealthChecks();
+            // Exemplo: Mysql, SQLServer, MongoDB, Rabbit - Verificar qual o método correto           
+            services.AddHealthChecks()
+                .AddDependencies(dadosDependencias);
+
+            services.AddHealthChecksUI();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -44,7 +66,7 @@ namespace ControleHorasApi
             });
             app.UseHealthChecksUI(opt =>
             {
-                opt.UIPath = "/status-dashbord";
+                opt.UIPath = "/dashbord";
             });
         }
     }
