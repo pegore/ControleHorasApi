@@ -10,6 +10,7 @@ using HealthChecks.UI.Client;
 using ControleHorasApi.Config;
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.OpenApi.Models;
 
 namespace ControleHorasApi
 {
@@ -23,6 +24,7 @@ namespace ControleHorasApi
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMvcCore().AddApiExplorer();
             var dadosDependencias = new List<Dependency>();
             new ConfigureFromConfigurationOptions<List<Dependency>>(
                 Configuration.GetSection("Dependencies"))
@@ -37,6 +39,15 @@ namespace ControleHorasApi
                 .AddDependencies(dadosDependencias);
 
             services.AddHealthChecksUI();
+            // Register the Swagger generator, defining 1 or more Swagger documents
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "ControleHorasAPI",
+                    Version = "v1"
+                });
+            });
 
         }
 
@@ -47,6 +58,21 @@ namespace ControleHorasApi
             {
                 app.UseDeveloperExceptionPage();
             }
+            //configurando o dashboard de healthcheck
+            app.UseHealthChecksUI(opt =>
+            {
+                opt.UIPath = "/dashbord";
+            });
+            app.UseStaticFiles();
+            // Enable middleware to serve generated Swagger as a JSON endpoint.
+            app.UseSwagger();
+
+            // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.),
+            // specifying the Swagger JSON endpoint.
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "ControleHorasAPI");
+            });
 
             app.UseRouting();
 
@@ -63,10 +89,7 @@ namespace ControleHorasApi
                     Predicate = _ => true,
                     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
                 });
-            });
-            app.UseHealthChecksUI(opt =>
-            {
-                opt.UIPath = "/dashbord";
+                endpoints.MapControllers();
             });
         }
     }
